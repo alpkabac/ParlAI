@@ -10,14 +10,17 @@ overworld: MessengerOverworld
 max_workers: 3
 opt:
   debug: True
+  log_level: debug
   models:
     blenderbot:
       model: projects.blenderbot2.agents.blenderbot2:BlenderBot2FidAgent
       model_file: zoo:blenderbot2/blenderbot2_400M/model
       interactive_mode: True
       no_cuda: True
+      log_level: debug
       override:
           knowledge_access_method: memory_only
           search_server: None
+          log_level: debug
 additional_args:
   page_id: 1 # Configure Your Own Page

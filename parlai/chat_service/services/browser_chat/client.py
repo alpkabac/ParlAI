@@ -7,12 +7,15 @@
 # 2021-08-27 jkang edited: See `WEB_HTML`
 
 import json
+import py
 import websocket
+import os
+import sys
 import threading
 from parlai.core.params import ParlaiParser
 from parlai.scripts.interactive_web import WEB_HTML, STYLE_SHEET, FONT_AWESOME
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
+# from parlai.chat_service.tasks.chatbot.worlds import MessengerBotChatTaskWorld
 
 SHARED = {}
 
@@ -23,7 +26,7 @@ def setup_interactive(ws):
 
 new_message = None
 message_available = threading.Event()
-
+# messenger_bot = MessengerBotChatTaskWorld()
 
 class BrowserHandler(BaseHTTPRequestHandler):
     """
@@ -73,6 +76,33 @@ class BrowserHandler(BaseHTTPRequestHandler):
             self.wfile.write(bytes("{}", 'utf-8'))
             message_available.wait()
             message_available.clear()
+        elif self.path == '/begin':
+            for i in range(2):
+                self._interactive_running(b"begin")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+        elif self.path == '/close':
+            self._interactive_running(b"[DONE]")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+            #close_client()
+        elif self.path == '/history':
+            print(opt.userid)
+            # self._interactive_running(b'[HISTORY]')
+            # self.send_response(200)
+            # self.send_header('Content-type', 'application/json')
+            # self.end_headers()
+            # self.wfile.write(bytes("{}", 'utf-8'))
+            # message_available.wait()
+            # message_available.clear()
         else:
             return self._respond({'status': 500})
 
@@ -179,9 +209,22 @@ def setup_args():
         type=int,
         help='Port used to configure the server',
     )
+    parser_grp.add_argument(
+        '--userid',
+        default='',
+        type=str,
+        help='User ID to use when chatting with the model',
+    )
 
     return parser.parse_args()
 
+def close_client():
+    """
+    Close the websocket connection.
+    """
+    SHARED['ws'].close()
+    SHARED['wb'].shutdown()
+    os._exit(os.EX_OK)
 
 if __name__ == "__main__":
     opt = setup_args()

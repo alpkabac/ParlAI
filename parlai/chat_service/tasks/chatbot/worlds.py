@@ -75,6 +75,9 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
+            elif '[HISTORY]' in a['text']:
+                print(self.agent.history)
+
             else:
                 print("===act====")
                 print(a)
@@ -88,6 +91,12 @@ class MessengerBotChatTaskWorld(World):
 
     def episode_done(self):
         return self.episodeDone
+    
+    def print_history(self):
+        print("===HISTORY===")
+        print(self.agent.history)
+        print("==============")
+        return self.agent.history
 
     def shutdown(self):
         self.agent.shutdown()
@@ -116,7 +125,7 @@ class MessengerOverworld(World):
 
     def episode_done(self):
         return self.episodeDone
-
+    
     def parley(self):
         if self.first_time:
             self.agent.observe(
