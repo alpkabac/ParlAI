@@ -11,6 +11,7 @@ import py
 import websocket
 import os
 import sys
+import re
 import threading
 from parlai.core.params import ParlaiParser
 from parlai.scripts.interactive_web import WEB_HTML, STYLE_SHEET, FONT_AWESOME
@@ -23,16 +24,16 @@ SHARED = {}
 def setup_interactive(ws):
     SHARED['ws'] = ws
 
-
+#define a list
+history = []
+userid = ''
 new_message = None
 message_available = threading.Event()
-# messenger_bot = MessengerBotChatTaskWorld()
 
 class BrowserHandler(BaseHTTPRequestHandler):
     """
     Handle HTTP requests.
     """
-
     def _interactive_running(self, reply_text):
         data = {}
         data['text'] = reply_text.decode('utf-8')
@@ -59,14 +60,21 @@ class BrowserHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
             self._interactive_running(body)
+            #append to history with newline
+            usermessage = body.decode('utf-8') + '\n'
+            usermessagenewline = usermessage.replace("\n","\\n")
+            #history.append(body.decode('utf-8') + '\n')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             model_response = {'id': 'Model', 'episode_done': False}
             message_available.wait()
             model_response['text'] = new_message
+            formattedmessage = json.dumps(model_response['text']) + '\n'
+            messagenewline = formattedmessage.replace("\n","\\n")
+            history.append(messagenewline)
             message_available.clear()
-            json_str = json.dumps(model_response)
+            json_str = json.dumps(model_response['text'])
             self.wfile.write(bytes(json_str, 'utf-8'))
         elif self.path == '/reset':
             self._interactive_running(b"[RESET]")
@@ -77,12 +85,15 @@ class BrowserHandler(BaseHTTPRequestHandler):
             message_available.wait()
             message_available.clear()
         elif self.path == '/begin':
-            for i in range(2):
-                self._interactive_running(b"begin")
+            self._interactive_running(b"begin")
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+            self._interactive_running(b"begin")
+            self.send_response(200)
             message_available.wait()
             message_available.clear()
         elif self.path == '/close':
@@ -95,7 +106,20 @@ class BrowserHandler(BaseHTTPRequestHandler):
             message_available.clear()
             #close_client()
         elif self.path == '/history':
-            print(opt.userid)
+            #if opt.userid isn't empty print userid
+            if userid:
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(bytes(''.join(history), 'utf-8'))
+            else:
+                print("No userid specified")
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(bytes('No userid specified', 'utf-8'))       
+                
+
             # self._interactive_running(b'[HISTORY]')
             # self.send_response(200)
             # self.send_header('Content-type', 'application/json')
@@ -228,6 +252,7 @@ def close_client():
 
 if __name__ == "__main__":
     opt = setup_args()
+    userid = opt.get('userid', '')
     port = opt.get('port', 34596)
     print("Connecting to port: ", port)
     ws = websocket.WebSocketApp(
