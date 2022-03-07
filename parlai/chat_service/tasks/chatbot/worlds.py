@@ -64,7 +64,8 @@ class MessengerBotChatTaskWorld(World):
                     'id': 'World',
                     'text': 'Welcome to the ParlAI Chatbot demo. '
                     'You are now paired with a bot - feel free to send a message.'
-                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.',
+                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
+                    'You can also use [HISTORY] to see the history of the conversation.',
                 }
             )
             self.first_time = False
@@ -75,9 +76,10 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
-            elif '[HISTORY]' in a['text']:
-                print(self.agent.history)
-
+            elif '[ATAT]' in a['text']:
+                print("===HISTORY===")
+                print(self.agent.history.get_history_str())
+                print("==============")
             else:
                 print("===act====")
                 print(a)
