@@ -31,7 +31,9 @@ class MessengerBotChatTaskWorld(World):
     """
 
     MAX_AGENTS = 1
-    MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender3B_1024'
+    MODEL_KEY = 'blenderbot'
 
     def __init__(self, opt, agent, bot):
         self.agent = agent
@@ -62,7 +64,8 @@ class MessengerBotChatTaskWorld(World):
                     'id': 'World',
                     'text': 'Welcome to the ParlAI Chatbot demo. '
                     'You are now paired with a bot - feel free to send a message.'
-                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.',
+                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
+                    'You can also use [HISTORY] to see the history of the conversation.',
                 }
             )
             self.first_time = False
@@ -73,6 +76,10 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
+            elif '[ATAT]' in a['text']:
+                print("===HISTORY===")
+                print(self.agent.history.get_history_str())
+                print("==============")
             else:
                 print("===act====")
                 print(a)
@@ -86,6 +93,12 @@ class MessengerBotChatTaskWorld(World):
 
     def episode_done(self):
         return self.episodeDone
+    
+    def print_history(self):
+        print("===HISTORY===")
+        print(self.agent.history)
+        print("==============")
+        return self.agent.history
 
     def shutdown(self):
         self.agent.shutdown()
@@ -114,7 +127,7 @@ class MessengerOverworld(World):
 
     def episode_done(self):
         return self.episodeDone
-
+    
     def parley(self):
         if self.first_time:
             self.agent.observe(

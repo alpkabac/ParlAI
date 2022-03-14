@@ -51,4 +51,5 @@ if __name__ == '__main__':
     config = config_utils.parse_configuration_file(config_path)
     opt.update(config['world_opt'])
     opt['config'] = config
+
     run(opt)

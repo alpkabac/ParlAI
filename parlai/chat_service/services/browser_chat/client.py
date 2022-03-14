@@ -4,13 +4,19 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 
+# 2021-08-27 jkang edited: See `WEB_HTML`
+
 import json
+import py
 import websocket
+import os
+import sys
 import threading
 from parlai.core.params import ParlaiParser
 from parlai.scripts.interactive_web import WEB_HTML, STYLE_SHEET, FONT_AWESOME
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+# from parlai.chat_service.tasks.chatbot.worlds import MessengerBotChatTaskWorld
 
 SHARED = {}
 
@@ -18,6 +24,7 @@ SHARED = {}
 def setup_interactive(ws):
     SHARED['ws'] = ws
 
+history = []
 
 new_message = None
 message_available = threading.Event()
@@ -54,17 +61,49 @@ class BrowserHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
             self._interactive_running(body)
+            #append to history with newline
+            history.append(body.decode('utf-8') + '\n')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             model_response = {'id': 'Model', 'episode_done': False}
             message_available.wait()
             model_response['text'] = new_message
+            #append to history with newline
+            history.append(new_message + '\n')
             message_available.clear()
             json_str = json.dumps(model_response)
             self.wfile.write(bytes(json_str, 'utf-8'))
         elif self.path == '/reset':
             self._interactive_running(b"[RESET]")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+        elif self.path == '/begin':
+            self._interactive_running(b"begin")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+            self._interactive_running(b"begin")
+            message_available.wait()
+            message_available.clear()
+        elif self.path == '/close':
+            self._interactive_running(b"[DONE]")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(bytes("{}", 'utf-8'))
+            message_available.wait()
+            message_available.clear()
+            #close_client()
+        elif self.path == '/history':
+            self._interactive_running(b"[HISTORY]")
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
@@ -177,9 +216,22 @@ def setup_args():
         type=int,
         help='Port used to configure the server',
     )
+    parser_grp.add_argument(
+        '--userid',
+        default='',
+        type=str,
+        help='User ID to use when chatting with the model',
+    )
 
     return parser.parse_args()
 
+def close_client():
+    """
+    Close the websocket connection.
+    """
+    SHARED['ws'].close()
+    SHARED['wb'].shutdown()
+    os._exit(os.EX_OK)
 
 if __name__ == "__main__":
     opt = setup_args()
