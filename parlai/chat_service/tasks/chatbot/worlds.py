@@ -5,11 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 #
 # py parlai/chat_service/tasks/overworld_demo/run.py --debug --verbose
-
+import sys
+import os.path
 from parlai.core.worlds import World
 from parlai.chat_service.services.messenger.worlds import OnboardWorld
 from parlai.core.agents import create_agent_from_shared
 
+save_path = "/chatlogs"
 
 # ---------- Chatbot demo ---------- #
 class MessengerBotChatOnboardWorld(OnboardWorld):
@@ -76,10 +78,25 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
-            elif '[ATAT]' in a['text']:
-                print("===HISTORY===")
-                print(self.agent.history.get_history_str())
-                print("==============")
+            elif '[HISTORY]' in a['text']:
+                    if os.path.exists(self.agent.id + '.txt'):
+                        with open(self.agent.id + '.txt', 'r') as f:
+                            saved_history = f.read()
+                            current_history = str(self.model.history.get_history_str())
+                            if len(saved_history)>len(current_history):
+                                res=saved_history.replace(current_history,'')
+                                print(res)            
+                            else: 
+                                res=current_history.replace(saved_history,'')
+                                print(res)            
+                        f = open(self.agent.id + ".txt", 'a')
+                        f.write(res)
+                        f.close()
+                    else:
+                        f = open(self.agent.id + '.txt', 'w')
+                        f.write('\n' + str(self.model.history.get_history_str()))
+                        f.close()
+                    self.agent.observe({"text": "[History Saved]", "episode_done": False})
             else:
                 print("===act====")
                 print(a)
@@ -89,16 +106,18 @@ class MessengerBotChatTaskWorld(World):
                 print("===response====")
                 print(response)
                 print("~~~~~~~~~~~")
+                print(self.agent.id)
+                print("===history====")
+                print(self.model.history.get_history_str())
+                print("==============")
+                #print model memories
+                # print("===history====")
+                # print(self.model.model.long_term_memory.memory_dict)
+                # print("==============")
                 self.agent.observe(response)
 
     def episode_done(self):
         return self.episodeDone
-    
-    def print_history(self):
-        print("===HISTORY===")
-        print(self.agent.history)
-        print("==============")
-        return self.agent.history
 
     def shutdown(self):
         self.agent.shutdown()
