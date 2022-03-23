@@ -8,6 +8,7 @@
 
 from datetime import date
 import json
+from tokenize import Number
 import py
 import websocket
 import os
@@ -21,9 +22,12 @@ from parlai.scripts.interactive_web import WEB_HTML, STYLE_SHEET, FONT_AWESOME
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 cred = credentials.Certificate("accountKey.json")
-default_app = firebase_admin.initialize_app(cred, {
-	'databaseURL': "https://misatobot-28b00-default-rtdb.europe-west1.firebasedatabase.app/"
-	})
+default_app = firebase_admin.initialize_app(
+    cred,
+    {
+        'databaseURL': "https://misatobot-28b00-default-rtdb.europe-west1.firebasedatabase.app/"
+    },
+)
 
 SHARED = {}
 
@@ -31,9 +35,11 @@ SHARED = {}
 def setup_interactive(ws):
     SHARED['ws'] = ws
 
+
 new_message = None
 message_available = threading.Event()
-
+id = None
+cached_history=None
 
 class BrowserHandler(BaseHTTPRequestHandler):
     """
@@ -102,7 +108,7 @@ class BrowserHandler(BaseHTTPRequestHandler):
             self.wfile.write(bytes("{}", 'utf-8'))
             message_available.wait()
             message_available.clear()
-            #close_client()
+            # close_client()
         elif self.path == '/history':
             self._interactive_running(b"[HISTORY]")
             self.send_response(200)
@@ -114,8 +120,11 @@ class BrowserHandler(BaseHTTPRequestHandler):
             print(new_message)
             json_str = json.dumps(model_response)
             self.wfile.write(bytes(json_str, 'utf-8'))
-            set_history(new_message)
+            set_history(id, new_message)
             message_available.clear()
+        elif self.path == "/gethistory":
+            get_history(id)
+
         else:
             return self._respond({'status': 500})
 
@@ -197,21 +206,31 @@ def on_open(ws):
     :param ws: websocket.WebSocketApp that sends messages to a browser_manager
     """
     threading.Thread(target=_run_browser).start()
+    get_history(id)
 
-def get_history
-    ref = db.reference("/Users")
-    for key, value in users():
-	if(value["Name"] == "Cringe"):
-        print(ref.get(key))
 
-def set_history(history):
-    ref = db.reference("/Users")
-    value = {
-        "name": "Cringe",
-        "history": history,
-        "last-login": date.today().strftime("%d/%m/%Y")
+def get_history(id):
+    user = db.reference('users').child(id).get()
+    if (user):
+            print(user['history'])
+    else:
+        print("No user found, creating...")
+        create_user(id)
+        
+def create_user(id):
+    user = {
+        'history': ""
     }
-    ref.push().set(value)
+    db.reference('users').child(id).set(user)
+
+def set_history(id, history):
+    ref = db.reference('users').child(id)
+    user = ref.get()
+    existing_history = user['history']
+    if (existing_history != ""):
+        ref.update({"history": existing_history + '\n'+ history})
+    else:
+        ref.update({"history": history})
 
 def setup_args():
     """
@@ -245,6 +264,7 @@ def setup_args():
 
     return parser.parse_args()
 
+
 def close_client():
     """
     Close the websocket connection.
@@ -253,9 +273,11 @@ def close_client():
     SHARED['wb'].shutdown()
     os._exit(os.EX_OK)
 
+
 if __name__ == "__main__":
     opt = setup_args()
     port = opt.get('port', 34596)
+    id = opt.get('userid', '3132')
     print("Connecting to port: ", port)
     ws = websocket.WebSocketApp(
         "ws://localhost:{}/websocket".format(port),
