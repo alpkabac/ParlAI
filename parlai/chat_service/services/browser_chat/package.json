@@ -1,0 +1,19 @@
+{
+  "name": "misatobot",
+  "version": "1.0.0",
+  "description": "This allows you to participate in a ParlAI world as an agent using a local browser. This extends the `websocket` chat service implementation to run a server locally, which you can send and receive messages using a browser.",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.19.2",
+    "child_process": "^1.0.2",
+    "express": "^4.17.3",
+    "node-cache": "^5.1.2",
+    "portfinder": "^1.0.28",
+    "process": "^0.11.10"
+  }
+}

@@ -76,7 +76,7 @@ function spawnChild() {
         }
         else {
             try {
-                python = spawn('python', ['client.py', '--port', '10003', '--serving_port', port, '--host', '0.0.0.0', '--userid', clientID], { detached: true });
+                python = spawn('python3', ['parlai/chat_service/services/browser_chat/client.py', '--port', '10003', '--serving_port', port, '--host', '0.0.0.0', '--userid', clientID], { detached: true });
                 python.stdout.on('data', (data) => {
                     console.log(`stdout: ${data}`);
                 });
