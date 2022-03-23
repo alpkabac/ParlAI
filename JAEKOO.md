@@ -70,6 +70,8 @@
     ssh ...
     # Or run ngrok
     nohup ngrok http 8080 --log=stdout > ngrok.log &
+    #start the api module
+    nodemon parlai/chat_service/services/browser_chat/api.js 
     ```
 
 
