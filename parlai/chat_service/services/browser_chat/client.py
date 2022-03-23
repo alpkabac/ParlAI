@@ -228,7 +228,7 @@ def set_history(id, history):
     user = ref.get()
     existing_history = user['history']
     if (existing_history != ""):
-        ref.update({"history": existing_history + '\n'+ history})
+        ref.update({"history":'\n'+ history})
     else:
         ref.update({"history": history})
 
