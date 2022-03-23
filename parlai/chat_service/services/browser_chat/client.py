@@ -6,25 +6,30 @@
 
 # 2021-08-27 jkang edited: See `WEB_HTML`
 
+from datetime import date
 import json
 import py
 import websocket
 import os
 import sys
 import threading
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
 from parlai.core.params import ParlaiParser
 from parlai.scripts.interactive_web import WEB_HTML, STYLE_SHEET, FONT_AWESOME
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-# from parlai.chat_service.tasks.chatbot.worlds import MessengerBotChatTaskWorld
+cred = credentials.Certificate("accountKey.json")
+default_app = firebase_admin.initialize_app(cred, {
+	'databaseURL': "https://misatobot-28b00-default-rtdb.europe-west1.firebasedatabase.app/"
+	})
 
 SHARED = {}
 
 
 def setup_interactive(ws):
     SHARED['ws'] = ws
-
-history = []
 
 new_message = None
 message_available = threading.Event()
@@ -61,16 +66,12 @@ class BrowserHandler(BaseHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             body = self.rfile.read(content_length)
             self._interactive_running(body)
-            #append to history with newline
-            history.append(body.decode('utf-8') + '\n')
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             model_response = {'id': 'Model', 'episode_done': False}
             message_available.wait()
             model_response['text'] = new_message
-            #append to history with newline
-            history.append(new_message + '\n')
             message_available.clear()
             json_str = json.dumps(model_response)
             self.wfile.write(bytes(json_str, 'utf-8'))
@@ -107,8 +108,13 @@ class BrowserHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(bytes("{}", 'utf-8'))
+            model_response = {'id': 'Model', 'episode_done': False}
             message_available.wait()
+            model_response['text'] = new_message
+            print(new_message)
+            json_str = json.dumps(model_response)
+            self.wfile.write(bytes(json_str, 'utf-8'))
+            set_history(new_message)
             message_available.clear()
         else:
             return self._respond({'status': 500})
@@ -192,6 +198,20 @@ def on_open(ws):
     """
     threading.Thread(target=_run_browser).start()
 
+def get_history
+    ref = db.reference("/Users")
+    for key, value in users():
+	if(value["Name"] == "Cringe"):
+        print(ref.get(key))
+
+def set_history(history):
+    ref = db.reference("/Users")
+    value = {
+        "name": "Cringe",
+        "history": history,
+        "last-login": date.today().strftime("%d/%m/%Y")
+    }
+    ref.push().set(value)
 
 def setup_args():
     """

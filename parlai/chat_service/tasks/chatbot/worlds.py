@@ -11,8 +11,6 @@ from parlai.core.worlds import World
 from parlai.chat_service.services.messenger.worlds import OnboardWorld
 from parlai.core.agents import create_agent_from_shared
 
-save_path = "/chatlogs"
-
 # ---------- Chatbot demo ---------- #
 class MessengerBotChatOnboardWorld(OnboardWorld):
     """
@@ -79,24 +77,16 @@ class MessengerBotChatTaskWorld(World):
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
             elif '[HISTORY]' in a['text']:
-                    if os.path.exists(self.agent.id + '.txt'):
-                        with open(self.agent.id + '.txt', 'r') as f:
-                            saved_history = f.read()
-                            current_history = str(self.model.history.get_history_str())
-                            if len(saved_history)>len(current_history):
-                                res=saved_history.replace(current_history,'')
-                                print(res)            
-                            else: 
-                                res=current_history.replace(saved_history,'')
-                                print(res)            
-                        f = open(self.agent.id + ".txt", 'a')
-                        f.write(res)
-                        f.close()
-                    else:
-                        f = open(self.agent.id + '.txt', 'w')
-                        f.write('\n' + str(self.model.history.get_history_str()))
-                        f.close()
-                    self.agent.observe({"text": "[History Saved]", "episode_done": False})
+                    current_history = str(self.model.history.get_history_str())    
+                    # if os.path.exists(self.agent.id + '.txt'):
+                    #     f = open(self.agent.id + ".txt", 'a')
+                    #     f.write(current_history)
+                    #     f.close()
+                    # else:
+                    #     f = open(self.agent.id + '.txt', 'w')
+                    #     f.write('\n' + current_history)
+                    #     f.close()
+                    self.agent.observe({"text": current_history , "episode_done": False})
             else:
                 print("===act====")
                 print(a)
