@@ -91,16 +91,19 @@ class MessengerBotChatTaskWorld(World):
                 print("===act====")
                 print(a)
                 print("~~~~~~~~~~~")
-                self.model.observe(a)
+                history = str(self.model.history.get_history_str())
+                if (history is not None and history != ''):
+                    print("===history====")
+                    print({"text": history + '\n' + a['text'] , "episode_done": False})
+                    print("~~~~~~~~~~~")
+                    self.model.observe({"text": history + '\n' + a['text'] , "episode_done": False})
+                else:
+                    self.model.observe(a)
                 response = self.model.act()
                 print("===response====")
                 print(response)
                 print("~~~~~~~~~~~")
-                print(self.agent.id)
-                print("===history====")
-                print(self.model.history.get_history_str())
-                print("==============")
-                #print model memories
+                 #print model memories
                 # print("===history====")
                 # print(self.model.model.long_term_memory.memory_dict)
                 # print("==============")
