@@ -21,7 +21,7 @@ opt:
           knowledge_access_method: memory_only
           search_server: None
           history_size: 100
-          #n_docs: 50
+          #n_docs: 50 takes too long to produce reply. might try later. 
           use_memories: True
           #do not forget to set the following parameter later
           memory_key: full_text
