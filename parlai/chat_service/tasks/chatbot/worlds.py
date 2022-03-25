@@ -91,14 +91,7 @@ class MessengerBotChatTaskWorld(World):
                 print("===act====")
                 print(a)
                 print("~~~~~~~~~~~")
-                history = str(self.model.history.get_history_str())
-                if (history is not None and history != ''):
-                    print("===history====")
-                    print({"text": history + '\n' + a['text'] , "episode_done": False})
-                    print("~~~~~~~~~~~")
-                    self.model.observe({"text": history + '\n' + a['text'] , "episode_done": False})
-                else:
-                    self.model.observe(a)
+                self.model.observe(a)
                 response = self.model.act()
                 print("===response====")
                 print(response)
