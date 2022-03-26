@@ -148,3 +148,5 @@ _generated/
 
 # npm compilation
 crowdsourcing/**/package-lock.json
+accountKey.json
+package-lock.json

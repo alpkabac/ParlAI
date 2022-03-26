@@ -1,0 +1,18 @@
+tasks:
+  default:
+    onboard_world: MyOnboardWorld
+    task_world: MyTaskWorld
+    timeout: 1800
+    agents_required: 1
+task_name: mytask
+world_module: parlai_internal.tasks.mytask.worlds
+overworld: MyMessengerOverworld
+max_workers: 5
+opt:
+  models:
+    seeker:
+      model: projects.seeker.agents.seeker:SeekerAgent
+      model_file: zoo:seeker/seeker_dialogue_3B/model
+      override:
+        no_cuda: True
+        search_server: 0.0.0.0:8080
