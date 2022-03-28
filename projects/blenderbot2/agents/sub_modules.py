@@ -341,6 +341,8 @@ class MemoryDecoder(BB2SubmoduleMixin):
             memories.append(memories_i)
 
         self.memories_full_list = memories
+        #print(f'Memory Input: {input}')
+        #print(f'Memories: {memories, memories_i, raw_memories_i, context_lines, mem_string}')
         return memories
 
     def _extract_from_raw_memories(self, raw_memories: List[str]) -> List[str]:

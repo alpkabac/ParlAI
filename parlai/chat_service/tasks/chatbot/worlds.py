@@ -5,11 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 #
 # py parlai/chat_service/tasks/overworld_demo/run.py --debug --verbose
-
+import sys
+import os.path
 from parlai.core.worlds import World
 from parlai.chat_service.services.messenger.worlds import OnboardWorld
 from parlai.core.agents import create_agent_from_shared
-
 
 # ---------- Chatbot demo ---------- #
 class MessengerBotChatOnboardWorld(OnboardWorld):
@@ -31,7 +31,9 @@ class MessengerBotChatTaskWorld(World):
     """
 
     MAX_AGENTS = 1
-    MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender3B_1024'
+    MODEL_KEY = 'blenderbot'
 
     def __init__(self, opt, agent, bot):
         self.agent = agent
@@ -62,7 +64,8 @@ class MessengerBotChatTaskWorld(World):
                     'id': 'World',
                     'text': 'Welcome to the ParlAI Chatbot demo. '
                     'You are now paired with a bot - feel free to send a message.'
-                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.',
+                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
+                    'You can also use [HISTORY] to see the history of the conversation.',
                 }
             )
             self.first_time = False
@@ -73,6 +76,17 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
+            elif '[HISTORY]' in a['text']:
+                    current_history = str(self.model.history.get_history_str())    
+                    # if os.path.exists(self.agent.id + '.txt'):
+                    #     f = open(self.agent.id + ".txt", 'a')
+                    #     f.write(current_history)
+                    #     f.close()
+                    # else:
+                    #     f = open(self.agent.id + '.txt', 'w')
+                    #     f.write('\n' + current_history)
+                    #     f.close()
+                    self.agent.observe({"text": current_history , "episode_done": False})
             else:
                 print("===act====")
                 print(a)
@@ -82,6 +96,10 @@ class MessengerBotChatTaskWorld(World):
                 print("===response====")
                 print(response)
                 print("~~~~~~~~~~~")
+                 #print model memories
+                # print("===history====")
+                # print(self.model.model.long_term_memory.memory_dict)
+                # print("==============")
                 self.agent.observe(response)
 
     def episode_done(self):
@@ -114,7 +132,7 @@ class MessengerOverworld(World):
 
     def episode_done(self):
         return self.episodeDone
-
+    
     def parley(self):
         if self.first_time:
             self.agent.observe(

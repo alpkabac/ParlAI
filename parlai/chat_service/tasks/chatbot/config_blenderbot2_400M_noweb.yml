@@ -1,0 +1,29 @@
+tasks:
+  default:
+    onboard_world: MessengerBotChatOnboardWorld
+    task_world: MessengerBotChatTaskWorld
+    timeout: 1800
+    agents_required: 1
+task_name: chatbot
+world_module: parlai.chat_service.tasks.chatbot.worlds
+overworld: MessengerOverworld
+max_workers: 3
+opt:
+  debug: True
+  log_level: debug
+  models:
+    blenderbot:
+      model: projects.blenderbot2.agents.blenderbot2:BlenderBot2FidAgent
+      model_file: zoo:blenderbot2/blenderbot2_400M/model
+      interactive_mode: True
+      no_cuda: True
+      override:
+          knowledge_access_method: memory_only
+          search_server: None
+          history_size: 100
+          #n_docs: 50 takes too long to produce reply. might try later. 
+          use_memories: True
+          #do not forget to set the following parameter later
+          memory_key: full_text
+additional_args:
+  page_id: 1 # Configure Your Own Page

@@ -743,6 +743,7 @@ class LongTermMemory(RagRetriever):
         self.active_memory_slots = list(mem_dict.keys())
         with torch.no_grad():
             slot_num_mems = [m.size(0) for m in mem_dict.values()]
+            #print(f'Writing to memory: {slot_num_mems}, {mem_dict.items()}')
             logging.debug(f'Writing {slot_num_mems} memories')
             mem_vecs = torch.cat(list(mem_dict.values()), dim=0)
             mem_encs = self.memory_encoder(mem_vecs)
