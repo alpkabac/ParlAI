@@ -10,23 +10,13 @@ overworld: MyMessengerOverworld
 max_workers: 5
 opt:
   interactive_mode: True
+  log_level: debug
   models:
     seeker:
       model: projects.seeker.agents.seeker:SeekerAgent
-      model_file: zoo:seeker/seeker_dialogue_3B/model
+      model_file: zoo:seeker/seeker_dialogue_400M/model
       override:
-        interactive_mode: True
         skip_generation: False
-        task: blended_skill_talk,wizard_of_wikipedia:Generator,convai2:normalized,empathetic_dialogues
-        multitask_weights: 1.0,3.0,3.0,3.0
-        batchsize: 2
-        dynamic_batching: full
-        beam_size: 10
-        beam_min_length: 20
-        beam_context_block_ngram: 3
-        beam_block_ngram: 3
-        inference: beam
-        truncate: 1022
-        label_truncate: 1000
+        interactive_mode: True
         no_cuda: True
         search_server: 0.0.0.0:8080
