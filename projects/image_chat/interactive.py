@@ -227,16 +227,19 @@ class MyHandler(BaseHTTPRequestHandler):
             model act dictionary
         """
         reply = {}
-        reply["text"] = data["personality"][0].decode()
-        text = data["text"][0].decode()
+        reply["text"] = data["personality"][0]
+        print("Personality: {}".format(reply["text"]))
+        text = data["text"][0]
+        print("Text: {}".format(text))
         if text:
             reply["text"] = "\n".join(SHARED["dialog_history"] + [text, reply["text"]])
             SHARED["dialog_history"].append(text)
         if SHARED["image_feats"] is None:
 
             img_data = str(data["image"][0])
-            _, encoded = img_data.split(",", 1)
-            image = Image.open(io.BytesIO(b64decode(encoded))).convert("RGB")
+            # print("Image: {}".format(img_data))
+            # _, encoded = img_data.split(",", 1)
+            image = Image.open(io.BytesIO(b64decode(img_data))).convert("RGB")
             SHARED["image_feats"] = SHARED["image_loader"].extract(image)
 
         reply["image"] = SHARED["image_feats"]
@@ -261,7 +264,7 @@ class MyHandler(BaseHTTPRequestHandler):
         ctype, pdict = cgi.parse_header(self.headers["content-type"])
         pdict["boundary"] = bytes(pdict["boundary"], "utf-8")
         postvars = cgi.parse_multipart(self.rfile, pdict)
-        if postvars["image"][0].decode() != "":
+        if postvars["image"][0].encode().decode() != "":
             SHARED["dialog_history"] = []
             SHARED["image_feats"] = None
         model_response = self.interactive_running(postvars)
@@ -269,6 +272,7 @@ class MyHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
+        print(model_response)
         json_str = json.dumps(model_response)
         self.wfile.write(bytes(json_str, "utf-8"))
 

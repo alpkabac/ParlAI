@@ -59,15 +59,15 @@ class MessengerBotChatTaskWorld(World):
 
     def parley(self):
         if self.first_time:
-            self.agent.observe(
-                {
-                    'id': 'World',
-                    'text': 'Welcome to the ParlAI Chatbot demo. '
-                    'You are now paired with a bot - feel free to send a message.'
-                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
-                    'You can also use [HISTORY] to see the history of the conversation.',
-                }
-            )
+            # self.agent.observe(
+            #     {
+            #         'id': 'World',
+            #         'text': 'Welcome to the ParlAI Chatbot demo. '
+            #         'You are now paired with a bot - feel free to send a message.'
+            #         'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
+            #         'You can also use [HISTORY] to see the history of the conversation.',
+            #     }
+            # )
             self.first_time = False
         a = self.agent.act()
         if a is not None:
@@ -78,15 +78,12 @@ class MessengerBotChatTaskWorld(World):
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
             elif '[HISTORY]' in a['text']:
                     current_history = str(self.model.history.get_history_str())    
-                    # if os.path.exists(self.agent.id + '.txt'):
-                    #     f = open(self.agent.id + ".txt", 'a')
-                    #     f.write(current_history)
-                    #     f.close()
-                    # else:
-                    #     f = open(self.agent.id + '.txt', 'w')
-                    #     f.write('\n' + current_history)
-                    #     f.close()
                     self.agent.observe({"text": current_history , "episode_done": False})
+            elif '[PERSONA]' in a['text']:
+                    a['text'] = a['text'].replace('[PERSONA]\n', "")
+                    self.model.observe({"text": a['text'], "episode_done": False})
+                    #print(self.model.persona) check later with self.model.model.persona
+
             else:
                 print("===act====")
                 print(a)
@@ -135,14 +132,14 @@ class MessengerOverworld(World):
     
     def parley(self):
         if self.first_time:
-            self.agent.observe(
-                {
-                    'id': 'Overworld',
-                    'text': 'Welcome to the overworld for the ParlAI messenger '
-                    'chatbot demo. Please type "begin" to start, or "exit" to exit',
-                    'quick_replies': ['begin', 'exit'],
-                }
-            )
+            # self.agent.observe(
+            #     {
+            #         'id': 'Overworld',
+            #         'text': 'Welcome to the overworld for the ParlAI messenger '
+            #         'chatbot demo. Please type "begin" to start, or "exit" to exit',
+            #         'quick_replies': ['begin', 'exit'],
+            #     }
+            # )
             self.first_time = False
         a = self.agent.act()
         if a is not None and a['text'].lower() == 'exit':

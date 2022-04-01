@@ -196,7 +196,7 @@ class MyHandler(BaseHTTPRequestHandler):
             model act dictionary
         """
         reply = {}
-        reply['text'] = data['personality'][0].decode()
+        reply['text'] = data['personality'][0]
         img_data = str(data['image'][0])
         _, encoded = img_data.split(',', 1)
         image = Image.open(io.BytesIO(b64decode(encoded))).convert('RGB')

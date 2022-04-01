@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 const prompt = require('prompt-sync')
-const ws = new WebSocket("ws://localhost:8082/");
+const ws = new WebSocket("wss://localhost:10003/");
 ws.onopen = function() {
    ws.send(JSON.stringify({"text":"begin"}));
    ws.send(JSON.stringify({"text": "begin"}));
