@@ -5,11 +5,14 @@
 # LICENSE file in the root directory of this source tree.
 #
 # py parlai/chat_service/tasks/overworld_demo/run.py --debug --verbose
-import sys
 import os.path
-from parlai.core.worlds import World
+import sys
+
 from parlai.chat_service.services.messenger.worlds import OnboardWorld
 from parlai.core.agents import create_agent_from_shared
+from parlai.core.worlds import World
+from parlai.chat_service.services.websocket.firebase import get_history, create_user, set_history 
+
 
 # ---------- Chatbot demo ---------- #
 class MessengerBotChatOnboardWorld(OnboardWorld):
@@ -40,6 +43,10 @@ class MessengerBotChatTaskWorld(World):
         self.episodeDone = False
         self.model = bot
         self.first_time = True
+        global userid
+        self.userid = userid
+        global history
+        self.history = history
 
     @staticmethod
     def generate_world(opt, agents):
@@ -56,19 +63,11 @@ class MessengerBotChatTaskWorld(World):
     @staticmethod
     def assign_roles(agents):
         agents[0].disp_id = 'ChatbotAgent'
-
+        
     def parley(self):
         if self.first_time:
-            # self.agent.observe(
-            #     {
-            #         'id': 'World',
-            #         'text': 'Welcome to the ParlAI Chatbot demo. '
-            #         'You are now paired with a bot - feel free to send a message.'
-            #         'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.'
-            #         'You can also use [HISTORY] to see the history of the conversation.',
-            #     }
-            # )
             self.first_time = False
+            
         a = self.agent.act()
         if a is not None:
             if '[DONE]' in a['text']:
@@ -83,7 +82,8 @@ class MessengerBotChatTaskWorld(World):
                     a['text'] = a['text'].replace('[PERSONA]\n', "")
                     self.model.observe({"text": a['text'], "episode_done": False})
                     #print(self.model.persona) check later with self.model.model.persona
-
+            elif '[SAVE]' in a['text']:
+                    self.save_history()
             else:
                 print("===act====")
                 print(a)
@@ -104,7 +104,13 @@ class MessengerBotChatTaskWorld(World):
 
     def shutdown(self):
         self.agent.shutdown()
-
+    
+    def save_history(self):
+        set_history(self.userid, self.model.history.get_history_str())
+    
+    def load_history(self):
+        self.history = get_history(self.userid)
+        self.model.observe({"text": self.history, "episode_done": False})
 
 # ---------- Overworld -------- #
 class MessengerOverworld(World):
@@ -132,27 +138,17 @@ class MessengerOverworld(World):
     
     def parley(self):
         if self.first_time:
-            # self.agent.observe(
-            #     {
-            #         'id': 'Overworld',
-            #         'text': 'Welcome to the overworld for the ParlAI messenger '
-            #         'chatbot demo. Please type "begin" to start, or "exit" to exit',
-            #         'quick_replies': ['begin', 'exit'],
-            #     }
-            # )
             self.first_time = False
         a = self.agent.act()
-        if a is not None and a['text'].lower() == 'exit':
-            self.episode_done = True
-            return 'EXIT'
-        if a is not None and a['text'].lower() == 'begin':
+        if a is not None:
             self.episodeDone = True
+            global userid
+            userid = a['text']
+            global history
+            history = create_user(userid)
+            print("===history====")
+            print(history)
+            print("==============")
+            if history is not None:
+                MessengerBotChatTaskWorld.load_history()
             return 'default'
-        elif a is not None:
-            self.agent.observe(
-                {
-                    'id': 'Overworld',
-                    'text': 'Invalid option. Please type "begin".',
-                    'quick_replies': ['begin'],
-                }
-            )

@@ -247,8 +247,7 @@ class ChatServiceManager(ABC):
         for agent_id, overworld_fut in self.agent_id_to_overworld_future.items():
             self.observe_message(
                 agent_id,
-                'System: The conversation bot going to go offline soon, '
-                'finish any active conversations in the next 5 minutes.',
+                '',
             )
             overworld_fut.cancel()
 
