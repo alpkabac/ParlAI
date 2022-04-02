@@ -67,7 +67,8 @@ class MessengerBotChatTaskWorld(World):
     def parley(self):
         if self.first_time:
             self.first_time = False
-            
+            if history is not None:
+                self.load_history_from_database()
         a = self.agent.act()
         if a is not None:
             if '[DONE]' in a['text']:
@@ -84,6 +85,11 @@ class MessengerBotChatTaskWorld(World):
                     #print(self.model.persona) check later with self.model.model.persona
             elif '[SAVE]' in a['text']:
                     self.save_history()
+            elif '[LOAD]' in a['text']:
+                    self.load_history(a['text'].replace('[LOAD]', ""))
+            elif '[EDIT]' in a['text']:
+                    a['text'] = a['text'].replace('[EDIT]', "")
+                    self.add_history(a['text'])
             else:
                 print("===act====")
                 print(a)
@@ -93,11 +99,12 @@ class MessengerBotChatTaskWorld(World):
                 print("===response====")
                 print(response)
                 print("~~~~~~~~~~~")
+                current_history = str(self.model.history.get_history_str())    
                  #print model memories
                 # print("===history====")
                 # print(self.model.model.long_term_memory.memory_dict)
                 # print("==============")
-                self.agent.observe(response)
+                self.agent.observe({'text': response['text'], 'history': current_history, 'episode_done': False})
 
     def episode_done(self):
         return self.episodeDone
@@ -107,8 +114,17 @@ class MessengerBotChatTaskWorld(World):
     
     def save_history(self):
         set_history(self.userid, self.model.history.get_history_str())
+
+    def load_history(self, text):
+        self.model.reset()
+        self.model.observe({"text": text, "episode_done": False})
     
-    def load_history(self):
+    def add_history(self, text):
+        history = self.model.history.get_history_str() + '\n' + text
+        self.model.reset()
+        self.model.observe({"text": history, "episode_done": False})
+    
+    def load_history_from_database(self):
         self.history = get_history(self.userid)
         self.model.observe({"text": self.history, "episode_done": False})
 
@@ -145,10 +161,10 @@ class MessengerOverworld(World):
             global userid
             userid = a['text']
             global history
-            history = create_user(userid)
+            history = get_history(userid)
             print("===history====")
             print(history)
             print("==============")
-            if history is not None:
-                MessengerBotChatTaskWorld.load_history()
+            # if history is not None:
+            #     MessengerBotChatTaskWorld().load_history()
             return 'default'

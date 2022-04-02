@@ -13,7 +13,6 @@ default_app = firebase_admin.initialize_app(
 def get_history(id):
     user = db.reference('users').child(id).get()
     if (user):
-            print(user['history'])
             return user['history']
     else:
         print("No user found, creating...")
