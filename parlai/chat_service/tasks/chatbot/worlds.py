@@ -127,6 +127,7 @@ class MessengerBotChatTaskWorld(World):
     def load_history_from_database(self):
         self.history = get_history(self.userid)
         self.model.observe({"text": self.history, "episode_done": False})
+        self.model.observe({"text": "your persona: I am Misato. I am a female. I am Japanese. I am 20 years old\npartner's persona: I am Oktay. I am a male.", "episode_done": False})
 
 # ---------- Overworld -------- #
 class MessengerOverworld(World):
