@@ -217,7 +217,7 @@ class WebsocketManager(ChatServiceManager):
             debug=self.debug,
         )
 
-    def observe_message(self, socket_id, message, quick_replies=None):
+    def observe_message(self, socket_id, message, history, quick_replies=None):
         """
         Send a message through the message manager.
 
@@ -233,7 +233,7 @@ class WebsocketManager(ChatServiceManager):
         if quick_replies is not None:
             quick_replies = list(quick_replies)
 
-        message = json.dumps({'text': message, 'quick_replies': quick_replies})
+        message = json.dumps({'text': message, 'history': history, 'quick_replies': quick_replies})
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         if socket_id not in self.subs:

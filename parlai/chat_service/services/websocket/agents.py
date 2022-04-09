@@ -42,7 +42,7 @@ class WebsocketAgent(ChatServiceAgent):
         if act.get('payload', None):
             self.manager.observe_payload(self.id, act['payload'], quick_replies)
         else:
-            self.manager.observe_message(self.id, act['text'], quick_replies)
+            self.manager.observe_message(self.id, act['text'], act['history'], quick_replies)
 
     def put_data(self, message):
         """
