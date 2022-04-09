@@ -5,10 +5,13 @@
 # LICENSE file in the root directory of this source tree.
 #
 # py parlai/chat_service/tasks/overworld_demo/run.py --debug --verbose
+import os.path
+import sys
 
-from parlai.core.worlds import World
 from parlai.chat_service.services.messenger.worlds import OnboardWorld
 from parlai.core.agents import create_agent_from_shared
+from parlai.core.worlds import World
+from parlai.chat_service.services.websocket.firebase import get_history, create_user, set_history 
 
 
 # ---------- Chatbot demo ---------- #
@@ -31,13 +34,19 @@ class MessengerBotChatTaskWorld(World):
     """
 
     MAX_AGENTS = 1
-    MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender_90M'
+    # MODEL_KEY = 'blender3B_1024'
+    MODEL_KEY = 'blenderbot'
 
     def __init__(self, opt, agent, bot):
         self.agent = agent
         self.episodeDone = False
         self.model = bot
         self.first_time = True
+        global userid
+        self.userid = userid
+        global history
+        self.history = history
 
     @staticmethod
     def generate_world(opt, agents):
@@ -54,18 +63,12 @@ class MessengerBotChatTaskWorld(World):
     @staticmethod
     def assign_roles(agents):
         agents[0].disp_id = 'ChatbotAgent'
-
+        
     def parley(self):
         if self.first_time:
-            self.agent.observe(
-                {
-                    'id': 'World',
-                    'text': 'Welcome to the ParlAI Chatbot demo. '
-                    'You are now paired with a bot - feel free to send a message.'
-                    'Type [DONE] to finish the chat, or [RESET] to reset the dialogue history.',
-                }
-            )
             self.first_time = False
+            if history is not None:
+                self.load_history_from_database()
         a = self.agent.act()
         if a is not None:
             if '[DONE]' in a['text']:
@@ -73,6 +76,20 @@ class MessengerBotChatTaskWorld(World):
             elif '[RESET]' in a['text']:
                 self.model.reset()
                 self.agent.observe({"text": "[History Cleared]", "episode_done": False})
+            elif '[HISTORY]' in a['text']:
+                    current_history = str(self.model.history.get_history_str())    
+                    self.agent.observe({"text": current_history , "episode_done": False})
+            elif '[PERSONA]' in a['text']:
+                    a['text'] = a['text'].replace('[PERSONA]\n', "")
+                    self.model.observe({"text": a['text'], "episode_done": False})
+                    #print(self.model.persona) check later with self.model.model.persona
+            elif '[SAVE]' in a['text']:
+                    self.save_history()
+            elif '[LOAD]' in a['text']:
+                    self.load_history(a['text'].replace('[LOAD]', ""))
+            elif '[EDIT]' in a['text']:
+                    a['text'] = a['text'].replace('[EDIT]', "")
+                    self.add_history(a['text'])
             else:
                 print("===act====")
                 print(a)
@@ -82,14 +99,35 @@ class MessengerBotChatTaskWorld(World):
                 print("===response====")
                 print(response)
                 print("~~~~~~~~~~~")
-                self.agent.observe(response)
+                current_history = str(self.model.history.get_history_str())    
+                 #print model memories
+                # print("===history====")
+                # print(self.model.model.long_term_memory.memory_dict)
+                # print("==============")
+                self.agent.observe({'text': response['text'], 'history': current_history, 'episode_done': False})
 
     def episode_done(self):
         return self.episodeDone
 
     def shutdown(self):
         self.agent.shutdown()
+    
+    def save_history(self):
+        set_history(self.userid, self.model.history.get_history_str())
 
+    def load_history(self, text):
+        self.model.reset()
+        self.model.observe({"text": text, "episode_done": False})
+    
+    def add_history(self, text):
+        history = self.model.history.get_history_str() + '\n' + text
+        self.model.reset()
+        self.model.observe({"text": history, "episode_done": False})
+    
+    def load_history_from_database(self):
+        self.history = get_history(self.userid)
+        self.model.observe({"text": self.history, "episode_done": False})
+        self.model.observe({"text": "your persona: I am Misato. I am a female. I am Japanese. I am 20 years old\npartner's persona: I am Oktay. I am a male.", "episode_done": False})
 
 # ---------- Overworld -------- #
 class MessengerOverworld(World):
@@ -114,30 +152,20 @@ class MessengerOverworld(World):
 
     def episode_done(self):
         return self.episodeDone
-
+    
     def parley(self):
         if self.first_time:
-            self.agent.observe(
-                {
-                    'id': 'Overworld',
-                    'text': 'Welcome to the overworld for the ParlAI messenger '
-                    'chatbot demo. Please type "begin" to start, or "exit" to exit',
-                    'quick_replies': ['begin', 'exit'],
-                }
-            )
             self.first_time = False
         a = self.agent.act()
-        if a is not None and a['text'].lower() == 'exit':
-            self.episode_done = True
-            return 'EXIT'
-        if a is not None and a['text'].lower() == 'begin':
+        if a is not None:
             self.episodeDone = True
+            global userid
+            userid = a['text']
+            global history
+            history = get_history(userid)
+            print("===history====")
+            print(history)
+            print("==============")
+            # if history is not None:
+            #     MessengerBotChatTaskWorld().load_history()
             return 'default'
-        elif a is not None:
-            self.agent.observe(
-                {
-                    'id': 'Overworld',
-                    'text': 'Invalid option. Please type "begin".',
-                    'quick_replies': ['begin'],
-                }
-            )
